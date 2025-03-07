@@ -28,7 +28,7 @@ class _RegisterState extends State<Register> {
   TextEditingController phone= TextEditingController();
   TextEditingController password= TextEditingController();
     TextEditingController Confirm= TextEditingController();
-    var regurl="https://6065-59-92-192-37.ngrok-free.app/register/";
+    var regurl="https://crown-florida-alabama-limitation.trycloudflare.com/register/";
 
 
 

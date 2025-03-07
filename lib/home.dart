@@ -57,7 +57,7 @@ class _homeState extends State<home> {
         for (var productData in productsData) {
           // Fetch image URL
           String imageUrl =
-              "https://6065-59-92-192-37.ngrok-free.app/${productData['image1']}";
+              "https://crown-florida-alabama-limitation.trycloudflare.com/${productData['image1']}";
           // You might need to adjust the URL based on your API response structure
 
           productsList.add({
@@ -98,7 +98,7 @@ class _homeState extends State<home> {
 
         for (var productData in productsData) {
           String imageUrl =
-              "https://6065-59-92-192-37.ngrok-free.app/${productData['image']}";
+              "https://crown-florida-alabama-limitation.trycloudflare.com/${productData['image']}";
           productsList.add({
             'id': productData['id'],
             'name': productData['name'],
@@ -180,7 +180,7 @@ class _homeState extends State<home> {
 
   api a = api();
   PageController _pageController = PageController();
-  var url = "https://6065-59-92-192-37.ngrok-free.app/admin/HOMFOO-categories";
+  var url = "https://crown-florida-alabama-limitation.trycloudflare.com/admin/HOMFOO-categories";
   late Timer _timer;
   List<String> bannerImageBase64Strings = [];
   String? _currentAddress;
@@ -356,7 +356,7 @@ Future<void> fetchCategories() async {
 
         for (var categoryData in categoriesData) {
              String imageUrl =
-              "https://6065-59-92-192-37.ngrok-free.app${categoryData['image']}";
+              "https://crown-florida-alabama-limitation.trycloudflare.com${categoryData['image']}";
        
           categoriesList.add({
             'id': categoryData['id'],

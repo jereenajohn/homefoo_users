@@ -44,6 +44,9 @@ dependencies:
   path_provider :
   google_nav_bar: ^5.0.6
   google_maps_flutter: ^2.6.1
+  image_picker: ^0.8.4+4
+  
+  
 
 dev_dependencies:
   flutter_test:
@@ -77,6 +80,10 @@ flutter:
     - lib/assets/rating.png
     - lib/assets/offer.png
     - lib/assets/loc_r.png
+    - lib/assets/burger.png
+    - lib/assets/pizza.png
+    - lib/assets/shawai.png
+    - lib/assets/juice.png
     
 
   # An image asset can refer to one or more resolution-specific "variants", see

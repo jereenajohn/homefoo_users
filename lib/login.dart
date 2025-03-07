@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:homefoo_users/ADMIN/admin_home.dart';
+import 'package:homefoo_users/home.dart';
 import 'package:homefoo_users/main.dart';
 import 'package:homefoo_users/maphome.dart';
 import 'package:homefoo_users/register.dart';
@@ -21,7 +23,7 @@ class login extends StatefulWidget {
 }
 
 class _loginState extends State<login> {
-  var url="https://6065-59-92-192-37.ngrok-free.app/login/";
+  var url="https://crown-florida-alabama-limitation.trycloudflare.com/login/";
   TextEditingController con1= TextEditingController();
   TextEditingController con2= TextEditingController();
 
@@ -54,11 +56,14 @@ class _loginState extends State<login> {
 
       //   });
       // } 
+      print(response.body);
        if (response.statusCode == 200) {
         var list2 = jsonDecode(response.body);
         var status = list2['status'];
         if (status == 'User Login is Successfully Completed') {
           var userId = list2['user_id'];
+          var user_type = list2['data']['user_type'];
+          print("=========$user_type");
            // Extract user ID
             var token = list2['token'];
           setState(() {
@@ -70,10 +75,20 @@ class _loginState extends State<login> {
 
           await storeUserId(userId,token); // Store user ID in shared preferences
 
-          Navigator.push(
+          if(user_type=="Admin"){
+            Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => MapScreen()),
+            MaterialPageRoute(builder: (context) => AdminHome()),
           );
+          }
+          else{
+            Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => home()),
+          );
+          }
+
+         
         }
       
       

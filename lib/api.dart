@@ -1,15 +1,23 @@
 class api{
-  var base="https://6065-59-92-192-37.ngrok-free.app/";
-  var banner="https://6065-59-92-192-37.ngrok-free.app/banners/";
-  var cat="https://6065-59-92-192-37.ngrok-free.app/categories/";
-  var restaurants="https://6065-59-92-192-37.ngrok-free.app/restaurants/";
+  var base="https://crown-florida-alabama-limitation.trycloudflare.com/";
+  var banner="https://crown-florida-alabama-limitation.trycloudflare.com/banners/";
+  var cat="https://crown-florida-alabama-limitation.trycloudflare.com/categories/";
+  var restaurants="https://crown-florida-alabama-limitation.trycloudflare.com/restaurants/";
 //All product view
-  var productview="https://6065-59-92-192-37.ngrok-free.app/products/";
+  var productview="https://crown-florida-alabama-limitation.trycloudflare.com/products/";
 
   //Restaurant
 
-  var rest_product="https://6065-59-92-192-37.ngrok-free.app/restaurant-product/";
+  var rest_product="https://crown-florida-alabama-limitation.trycloudflare.com/restaurant-product/";
 
 
-  var restreg="https://6065-59-92-192-37.ngrok-free.app/HOMFOO-restaurant/";
+  var restreg="https://crown-florida-alabama-limitation.trycloudflare.com/HOMFOO-restaurant/";
+
+
+
+  //admin
+
+  var rest_pending='https://crown-florida-alabama-limitation.trycloudflare.com/admin/HOMFOO-restaurants/';
+    var rest_approved='https://crown-florida-alabama-limitation.trycloudflare.com/admin/HOMFOO-approved-restaurants/';
+
 }
