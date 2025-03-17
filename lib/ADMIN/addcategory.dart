@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:homefoo_users/ADMIN/update_categoy.dart';
+import 'package:homefoo_users/ADMIN/update_category.dart';
 import 'package:homefoo_users/api.dart';
 import 'package:homefoo_users/userprofile.dart';
 import 'package:http/http.dart' as http;
@@ -42,7 +42,7 @@ class _admin_categoriesviewState extends State<admin_categoriesview> {
       var token = await gettokenFromPrefs();
 print('$api/HOMFOO-categories/');
       var response = await http.get(
-        Uri.parse('https://crown-florida-alabama-limitation.trycloudflare.com/admin/HOMFOO-categories/'),
+        Uri.parse('$api/admin/HOMFOO-categories/'),
         headers: {
           'Authorization': '$token',
           'Content-Type': 'application/json',
@@ -79,7 +79,7 @@ print("======================${response.body}");
 
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('https://crown-florida-alabama-limitation.trycloudflare.com/admin/HOMFOO-category/'),
+        Uri.parse('$api/admin/HOMFOO-category/'),
       );
 
       request.headers['Authorization'] = '$token';
@@ -131,7 +131,7 @@ print("======================${response.body}");
       var token = await gettokenFromPrefs();
 
       var response = await http.delete(
-        Uri.parse('https://crown-florida-alabama-limitation.trycloudflare.com/admin/HOMFOO-delete-category/$id/'),
+        Uri.parse('$api/admin/HOMFOO-delete-category/$id/'),
         headers: {
           'Authorization': '$token',
         },
@@ -294,7 +294,7 @@ print(response.body);
                                               const SizedBox(height: 5),
                                               address[index]['image'] != null
                                                   ? Image.network(
-                                                      'https://crown-florida-alabama-limitation.trycloudflare.com${address[index]['image']}',
+                                                      '$api${address[index]['image']}',
                                                       height: 50,
                                                       width: 50,
                                                       fit: BoxFit.cover,

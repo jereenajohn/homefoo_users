@@ -1,30 +1,29 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:homefoo_users/api.dart';
+import 'package:homefoo_users/updateaddress.dart';
 import 'package:homefoo_users/userprofile.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:image_picker/image_picker.dart';
 
-class update_categoriesview extends StatefulWidget {
-  var id;
-  update_categoriesview({super.key, required this.id});
+class Addaddress extends StatefulWidget {
+  const Addaddress({super.key});
 
   @override
-  State<update_categoriesview> createState() => _update_categoriesviewState();
+  State<Addaddress> createState() => _AddaddressState();
 }
 
-class _update_categoriesviewState extends State<update_categoriesview> {
-  final TextEditingController category = TextEditingController();
- 
+class _AddaddressState extends State<Addaddress> {
+  final TextEditingController addressController = TextEditingController();
+  final TextEditingController cityController = TextEditingController();
+  final TextEditingController pincodeController = TextEditingController();
+  final TextEditingController landmarkController = TextEditingController();
   List<Map<String, dynamic>> address = [];
 
   @override
   void initState() {
     super.initState();
-    getcategoryid(); // Fetch addresses when screen loads
-    getcategory();
+    getaddress(); // Fetch addresses when screen loads
   }
 
   Future<String?> getUserIdFromPrefs() async {
@@ -36,13 +35,14 @@ class _update_categoriesviewState extends State<update_categoriesview> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
   }
-Future<void> getcategory() async {
+
+  Future<void> getaddress() async {
     try {
       var userId = await getUserIdFromPrefs();
       var token = await gettokenFromPrefs();
-print('$api/HOMFOO-categories/');
+
       var response = await http.get(
-        Uri.parse('https://crown-florida-alabama-limitation.trycloudflare.com/admin/HOMFOO-categories/'),
+        Uri.parse('$api/addresses/$userId/'),
         headers: {
           'Authorization': '$token',
           'Content-Type': 'application/json',
@@ -57,90 +57,60 @@ print("======================${response.body}");
           address = productsData.map<Map<String, dynamic>>((data) {
             return {
               'id': data['id'],
-              'name': data['name'],
-              'image': data['image'],
-              
+              'complete_address': data['complete_address'],
+              'city': data['city'],
+              'postal_code': data['postal_code'],
+              'Land_mark': data['Land_mark'],
             };
           }).toList();
         });
-
-        print('Addresses: $address');
-      }
-    } catch (error) {
-      print("Error fetching addresses: $error");
-    }
-  }
-  Future<void> getcategoryid() async {
-    try {
-      var userId = await getUserIdFromPrefs();
-      var token = await gettokenFromPrefs();
-print('$api/HOMFOO-categories/');
-      var response = await http.get(
-        Uri.parse('https://crown-florida-alabama-limitation.trycloudflare.com/admin/HOMFOO-update-category/${widget.id}/'),
-        headers: {
-          'Authorization': '$token',
-          'Content-Type': 'application/json',
-        },
-      );
-print("======================${response.body}");
-      if (response.statusCode == 200) {
-        final parsed = jsonDecode(response.body);
-        var productsData = parsed['data'];
-
-        setState(() {
-         category.text=productsData['name']?? '';;
-        });
-
-        print('Addresses: $address');
       }
     } catch (error) {
       print("Error fetching addresses: $error");
     }
   }
 
-  void updatecategory() async {
+  void addaddress() async {
     final token = await gettokenFromPrefs();
 
     try {
       var userId = await getUserIdFromPrefs();
 
-      var request = http.MultipartRequest(
-        'PUT',
-        Uri.parse('https://crown-florida-alabama-limitation.trycloudflare.com/admin/HOMFOO-update-category/${widget.id}/'),
+      var response = await http.post(
+        Uri.parse('$api/add-address/'),
+        headers: {
+          'Authorization': '$token',
+        },
+        body: {
+          "user": userId,
+          "complete_address": addressController.text,
+          "city": cityController.text,
+          "postal_code": pincodeController.text,
+          "Land_mark": landmarkController.text,
+        },
       );
 
-      request.headers['Authorization'] = '$token';
-
-      request.fields['name'] = category.text;
-
-      if (image != null) {
-        request.files.add(await http.MultipartFile.fromPath('image', image.path));
-      }
-
-      var response = await request.send();
-print(response.statusCode);
-print(response.reasonPhrase);
-      if (response.statusCode == 200) {
+      if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: Colors.green,
-            content: Text('Category added successfully!'),
+            content: Text('Address added successfully!'),
           ),
         );
 
-        // Clear input fields after adding category
-        category.clear();
-        setState(() {
-          image = null;
-        });
+        // Clear input fields after adding address
+        addressController.clear();
+        cityController.clear();
+        pincodeController.clear();
+        landmarkController.clear();
 
-        // Refresh category list
-        getcategory();
+        // Refresh address list
+        getaddress();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: Colors.red,
-            content: Text('Failed to add category. Please try again.'),
+            content: Text('Failed to add address. Please try again.'),
           ),
         );
       }
@@ -154,20 +124,20 @@ print(response.reasonPhrase);
     }
   }
 
- void deletecategory(int id) async {
+ void deleteAddress(int id) async {
     try {
       var token = await gettokenFromPrefs();
 
       var response = await http.delete(
-        Uri.parse('https://crown-florida-alabama-limitation.trycloudflare.com/admin/HOMFOO-delete-category/$id/'),
+        Uri.parse('$api/deleteaddresses/$id/'),
         headers: {
           'Authorization': '$token',
         },
       );
 print(response.statusCode);
 print(response.body);
-      if (response.statusCode == 200) {
-        getcategory();
+      if (response.statusCode == 204) {
+        getaddress();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: Colors.red,
@@ -177,18 +147,6 @@ print(response.body);
       }
     } catch (e) {
       print('Error deleting address: $e');
-    }
-  }
-
-
-  var image;
-  final ImagePicker _picker = ImagePicker();
-  Future<void> pickImagemain() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        image = File(pickedFile.path);
-      });
     }
   }
   @override
@@ -201,8 +159,8 @@ print(response.body);
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
-            // Navigator.push(context,
-            //     MaterialPageRoute(builder: (context) => UserProfile()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => UserProfile()));
           },
         ),
         title: const Text(
@@ -219,56 +177,19 @@ print(response.body);
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
-                  _buildTextField("name", category,
+                  _buildTextField("Address", addressController,
                       isEditable: true),
-
-                      
-                  Stack(
-                    children: [
-                      TextFormField(
-                        readOnly: true,
-                        decoration: InputDecoration(
-                          labelText: 'Select Main Image',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10.0),
-                            borderSide: BorderSide(color: Colors.grey),
-                          ),
-                          suffixIcon: image == null
-                              ? IconButton(
-                                  icon: Icon(Icons.image),
-                                  onPressed: () => pickImagemain(), // Trigger image picker for this index
-                                )
-                              : null,
-                        ),
-                      ),
-                      if (image != null)
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          bottom: 0,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.only(
-                              topRight: Radius.circular(10),
-                              bottomRight: Radius.circular(10),
-                            ),
-                            child: Image.file(
-                              image,
-                              height: 50,
-                              width: 50,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                 
+                  _buildTextField("City", cityController, isEditable: true),
+                  _buildTextField("Pincode", pincodeController,
+                      isEditable: true),
+                  _buildTextField("Landmark", landmarkController,
+                      isEditable: true),
 
                   const SizedBox(height: 20),
 
                   // Add Address Button
                   ElevatedButton(
-                    onPressed:(){
-                      updatecategory();} ,
+                    onPressed: addaddress,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       padding: const EdgeInsets.symmetric(
@@ -319,21 +240,30 @@ print(response.body);
                                                 CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                address[index]['name'] ?? '',
+                                                address[index]
+                                                        ['complete_address'] ??
+                                                    '',
                                                 style: const TextStyle(
                                                     fontSize: 16,
                                                     fontWeight:
                                                         FontWeight.bold),
                                               ),
                                               const SizedBox(height: 5),
-                                              address[index]['image'] != null
-                                                  ? Image.network(
-                                                      'https://crown-florida-alabama-limitation.trycloudflare.com${address[index]['image']}',
-                                                      height: 50,
-                                                      width: 50,
-                                                      fit: BoxFit.cover,
-                                                    )
-                                                  : Container(),
+                                              Text(
+                                                "City: ${address[index]['city'] ?? ''}",
+                                                style: const TextStyle(
+                                                    fontSize: 14),
+                                              ),
+                                              Text(
+                                                "Pincode: ${address[index]['postal_code'] ?? ''}",
+                                                style: const TextStyle(
+                                                    fontSize: 14),
+                                              ),
+                                              Text(
+                                                "Landmark: ${address[index]['Land_mark'] ?? ''}",
+                                                style: const TextStyle(
+                                                    fontSize: 14),
+                                              ),
                                             ],
                                           ),
                                         ),
@@ -344,15 +274,16 @@ print(response.body);
                                                   color: Colors.blue),
                                               onPressed: () {
 
-                                               
-                                                
+                                                Navigator.push(context,
+                                                    MaterialPageRoute(builder: (context) => Updateaddress(address:address[index]['id'])));
+                                                // Add your edit functionality here
                                               },
                                             ),
                                             IconButton(
                                               icon: const Icon(Icons.delete,
                                                   color: Colors.red),
                                               onPressed: () {
-                                                deletecategory(address[index]['id']);
+                                                deleteAddress(address[index]['id']);
                                                 // Add your delete functionality here
                                               },
                                             ),
@@ -369,7 +300,7 @@ print(response.body);
                       : const Padding(
                           padding: EdgeInsets.only(top: 20),
                           child: Text(
-                            "No category found!",
+                            "No addresses found!",
                             style: TextStyle(fontSize: 16, color: Colors.grey),
                           ),
                         ),

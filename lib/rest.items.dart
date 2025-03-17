@@ -19,7 +19,6 @@ class rest_items extends StatefulWidget {
 }
 
 class _rest_itemsState extends State<rest_items> {
-  api a = api();
   List<Map<String, dynamic>> Products = [];
   late List<int> quantities;
   late List<bool> showQuantityButtonList;
@@ -33,6 +32,10 @@ class _rest_itemsState extends State<rest_items> {
     fetchProducts();
     fetchCategories();
     initializeButtonVisibility();
+
+    print(widget.restaurant_id);
+        print(widget.name);
+
   }
 
   void initializeButtonVisibility() {
@@ -114,7 +117,7 @@ class _rest_itemsState extends State<rest_items> {
               .cast<Map<String, dynamic>>();
         });
       } else {
-        final response = await http.get(Uri.parse(a.cat));
+        final response = await http.get(Uri.parse('$api/categories/'));
 
         if (response.statusCode == 200) {
           final List<dynamic> categoriesData =
@@ -122,7 +125,7 @@ class _rest_itemsState extends State<rest_items> {
           List<Map<String, dynamic>> categoriesList = [];
 
           for (var categoryData in categoriesData) {
-            String imageUrl = "${a.base}" + categoryData['image'];
+            String imageUrl = "${api}" + categoryData['image'];
             String base64Image = await convertImageToBase64(imageUrl);
             categoriesList.add({
               'id': categoryData['id'],
@@ -151,21 +154,65 @@ class _rest_itemsState extends State<rest_items> {
     }
   }
 
+
+Future<void> addtocart(BuildContext scaffoldContext,id) async{
+    final token = await gettokenFromPrefs();
+ try{
+   final response= await http.post(Uri.parse('$api/Addtocart/'),
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': '$token',
+  },
+  body:jsonEncode(
+    {
+     'product':id,
+     'quantity':1,}
+  )
+  );
+   print('Response: ${response.statusCode}');
+      print('Response: ${response.body}');  
+
+      if (response.statusCode == 200) {
+       ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+          SnackBar(
+             backgroundColor: Colors.green,
+            content: Text(' added Successfully.'),
+          ),
+        );
+        // Navigator.push(context, MaterialPageRoute(builder: (context)=>add_bank()));
+      } else {
+        ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+          SnackBar(
+            backgroundColor: Colors.red,
+            content: Text('Please order from same restaurant.'),
+          ),
+        );
+      }
+ }
+ catch(e){
+  
+ }
+}
 //products
 
   List<int> categoryIds = [];
   Future<void> fetchProducts() async {
     final token = await gettokenFromPrefs();
-    print(a.rest_product + '${widget.restaurant_id}');
+    print('Token: $token');
+    print('$api/restaurant-product/${widget.restaurant_id}/');
     try {
-      var response = await http.post(Uri.parse(a.rest_product), headers: {
+      var response = await http.post(Uri.parse('$api/restaurant-product/${widget.restaurant_id}/'), 
+      headers: {
         'Authorization': '$token',
       }, body: {
         'token': token,
-        'pk': widget.restaurant_id
+        'pk': widget.restaurant_id.toString()
       });
 
       print('Response: ${response.statusCode}');
+
+            print('Responseeeeeeeee: ${response.body}');
+
 
       if (response.statusCode == 200) {
         final parsed = jsonDecode(response.body);
@@ -176,7 +223,7 @@ class _rest_itemsState extends State<rest_items> {
         for (var productData in productsData) {
           // Fetch image URL
           String imageUrl =
-              "https://crown-florida-alabama-limitation.trycloudflare.com/${productData['image1']}";
+              "$api/${productData['image1']}";
           // You might need to adjust the URL based on your API response structure
 
           productsList.add({
@@ -204,7 +251,7 @@ class _rest_itemsState extends State<rest_items> {
         throw Exception('Failed to load category products');
       }
     } catch (error) {
-      print('Error fetching category products: $error');
+      print('Error fetching  products: $error');
     }
   }
 
@@ -375,71 +422,12 @@ class _rest_itemsState extends State<rest_items> {
                                               ),
                                             ),
                                             SizedBox(height: 9),
-                                            showQuantityButtonList[index]
-                                                ? ElevatedButton(
-                                                    onPressed: () =>
-                                                        incrementQuantity(
-                                                            index),
-                                                    style: ButtonStyle(
-                                                      backgroundColor:
-                                                          MaterialStateProperty
-                                                              .all<Color>(Colors
-                                                                  .white), // Set background color to white
-                                                      shape: MaterialStateProperty
-                                                          .all<
-                                                              RoundedRectangleBorder>(
-                                                        RoundedRectangleBorder(
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                  10.0), // Set border radius
-                                                          side: BorderSide(
-                                                              color: Color.fromARGB(
-                                                                  255,
-                                                                  43,
-                                                                  43,
-                                                                  43)), // Set border color and width
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    child: Row(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        IconButton(
-                                                          onPressed: () =>
-                                                              decrementQuantity(
-                                                                  index),
-                                                          icon: Icon(
-                                                            Icons.remove,
-                                                            color: const Color
-                                                                .fromARGB(
-                                                                255, 1, 1, 1),
-                                                          ),
-                                                        ),
-                                                        Text(
-                                                          '${quantities[index]}',
-                                                          style: TextStyle(
-                                                              color: const Color
-                                                                  .fromARGB(255,
-                                                                  3, 3, 3)),
-                                                        ),
-                                                        IconButton(
-                                                          onPressed: () =>
-                                                              incrementQuantity(
-                                                                  index),
-                                                          icon: Icon(
-                                                            Icons.add,
-                                                            color: const Color
-                                                                .fromARGB(
-                                                                255, 0, 0, 0),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  )
-                                                : ElevatedButton(
-                                                    onPressed: () =>
-                                                        resetQuantity(index),
+                                           ElevatedButton(
+                                                    onPressed: () {
+
+                                                      addtocart(context,product['id']);
+                                                    },
+                                                       
                                                     style: ButtonStyle(
                                                       backgroundColor:
                                                           MaterialStateProperty

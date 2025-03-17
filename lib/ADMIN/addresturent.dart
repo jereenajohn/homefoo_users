@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:homefoo_users/api.dart';
 
-
 class AddRestaurant extends StatefulWidget {
   const AddRestaurant({super.key});
 
@@ -14,19 +13,17 @@ class AddRestaurant extends StatefulWidget {
 
 class _AddRestaurantState extends State<AddRestaurant> {
   List<Map<String, dynamic>> restaurant = [];
-    late List<bool> isFavorite;
+  late List<bool> isFavorite;
 
-@override
+  @override
   void initState() {
     fetchResturents();
     super.initState();
   }
-  
-    api a = new api();
 
   Future<void> fetchResturents() async {
     try {
-      final response = await http.get(Uri.parse(a.rest_approved));
+      final response = await http.get(Uri.parse('$api/admin/HOMFOO-approved-restaurants/'));
       print('Response: ${response.statusCode}');
       print('Response: ${response.body}');
       if (response.statusCode == 200) {
@@ -39,7 +36,7 @@ class _AddRestaurantState extends State<AddRestaurant> {
           for (var productData in productsData) {
             if (productData is Map<String, dynamic>) {
               String imageUrl =
-                  "https://crown-florida-alabama-limitation.trycloudflare.com/${productData['image']}";
+                  "$api${productData['image']}";
               productsList.add({
                 'id': productData['id'],
                 'name': productData['name'],
@@ -69,7 +66,6 @@ class _AddRestaurantState extends State<AddRestaurant> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,25 +75,25 @@ class _AddRestaurantState extends State<AddRestaurant> {
       body: restaurant.isNotEmpty
           ? Container(
               color: const Color.fromARGB(255, 255, 255, 255),
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        // Text(
-                        //   "Approved Restaurants",
-                        //   style: TextStyle(
-                        //     fontWeight: FontWeight.bold,
-                        //     fontSize: 16,
-                        //   ),
-                        // ),
-                      ],
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 20),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          // Text(
+                          //   "Approved Restaurants",
+                          //   style: TextStyle(
+                          //     fontWeight: FontWeight.bold,
+                          //     fontSize: 16,
+                          //   ),
+                          // ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
+                    ListView.builder(
                       shrinkWrap: true,
                       physics: NeverScrollableScrollPhysics(),
                       itemCount: restaurant.length,
@@ -208,8 +204,8 @@ class _AddRestaurantState extends State<AddRestaurant> {
                         );
                       },
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             )
           : Container(

@@ -1,32 +1,30 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:homefoo_users/ADMIN/update_categoy.dart';
 import 'package:homefoo_users/api.dart';
 import 'package:homefoo_users/userprofile.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 
-class update_Banners extends StatefulWidget {
+class update_categoriesview extends StatefulWidget {
   var id;
-  update_Banners({super.key,required this.id});
+  update_categoriesview({super.key, required this.id});
 
   @override
-  State<update_Banners> createState() => _update_BannersState();
+  State<update_categoriesview> createState() => _update_categoriesviewState();
 }
 
-class _update_BannersState extends State<update_Banners> {
+class _update_categoriesviewState extends State<update_categoriesview> {
   final TextEditingController category = TextEditingController();
  
-  List<Map<String, dynamic>> Banner = [];
+  List<Map<String, dynamic>> address = [];
 
   @override
   void initState() {
     super.initState();
-    getbanner(); // Fetch addresses when screen loads
-    getbannerid();
-
+    getcategoryid(); // Fetch addresses when screen loads
+    getcategory();
   }
 
   Future<String?> getUserIdFromPrefs() async {
@@ -38,25 +36,25 @@ class _update_BannersState extends State<update_Banners> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
   }
-
-  Future<void> getbanner() async {
+Future<void> getcategory() async {
     try {
       var userId = await getUserIdFromPrefs();
       var token = await gettokenFromPrefs();
+print('$api/HOMFOO-categories/');
       var response = await http.get(
-        Uri.parse('https://crown-florida-alabama-limitation.trycloudflare.com/admin/HOMFOO-banners/'),
+        Uri.parse('$api/admin/HOMFOO-categories/'),
         headers: {
           'Authorization': '$token',
           'Content-Type': 'application/json',
         },
       );
-print("===========${response.body}");
+print("======================${response.body}");
       if (response.statusCode == 200) {
         final parsed = jsonDecode(response.body);
-        var productsData = parsed['Banners'];
+        var productsData = parsed['data'];
 
         setState(() {
-          Banner = productsData.map<Map<String, dynamic>>((data) {
+          address = productsData.map<Map<String, dynamic>>((data) {
             return {
               'id': data['id'],
               'name': data['name'],
@@ -66,44 +64,41 @@ print("===========${response.body}");
           }).toList();
         });
 
-        print('Addresses: $Banner');
+        print('Addresses: $address');
+      }
+    } catch (error) {
+      print("Error fetching addresses: $error");
+    }
+  }
+  Future<void> getcategoryid() async {
+    try {
+      var userId = await getUserIdFromPrefs();
+      var token = await gettokenFromPrefs();
+print('$api/HOMFOO-categories/');
+      var response = await http.get(
+        Uri.parse('https://crown-florida-alabama-limitation.trycloudflare.com/admin/HOMFOO-update-category/${widget.id}/'),
+        headers: {
+          'Authorization': '$token',
+          'Content-Type': 'application/json',
+        },
+      );
+print("======================${response.body}");
+      if (response.statusCode == 200) {
+        final parsed = jsonDecode(response.body);
+        var productsData = parsed['data'];
+
+        setState(() {
+         category.text=productsData['name']?? '';;
+        });
+
+        print('Addresses: $address');
       }
     } catch (error) {
       print("Error fetching addresses: $error");
     }
   }
 
-
-  Future<void> getbannerid() async {
-    try {
-      var userId = await getUserIdFromPrefs();
-      var token = await gettokenFromPrefs();
-      var response = await http.get(
-        Uri.parse('https://crown-florida-alabama-limitation.trycloudflare.com/admin/HOMFOO-update-banner/${widget.id}/'),
-        headers: {
-          'Authorization': '$token',
-          'Content-Type': 'application/json',
-        },
-      );
-      print("======================${response.statusCode}");
-print("======================${response.body}");
-      if (response.statusCode == 200) {
-        final parsed = jsonDecode(response.body);
-        if (parsed != null) {
-          setState(() {
-            category.text = parsed['name'] ?? '';
-          });
-          print('Banner details: $parsed');
-        } else {
-          print("Error: Response is null.");
-        }
-      }
-    } catch (error) {
-      print("Error fetching banner details: $error");
-    }
-  }
-
-  void updatebanaer() async {
+  void updatecategory() async {
     final token = await gettokenFromPrefs();
 
     try {
@@ -111,7 +106,7 @@ print("======================${response.body}");
 
       var request = http.MultipartRequest(
         'PUT',
-        Uri.parse('https://crown-florida-alabama-limitation.trycloudflare.com/admin/HOMFOO-update-banner/${widget.id}/'),
+        Uri.parse('https://crown-florida-alabama-limitation.trycloudflare.com/admin/HOMFOO-update-category/${widget.id}/'),
       );
 
       request.headers['Authorization'] = '$token';
@@ -123,9 +118,8 @@ print("======================${response.body}");
       }
 
       var response = await request.send();
-      print(response.statusCode);
-      print(response.reasonPhrase);
-
+print(response.statusCode);
+print(response.reasonPhrase);
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -141,7 +135,7 @@ print("======================${response.body}");
         });
 
         // Refresh category list
-        getbanner();
+        getcategory();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -160,12 +154,12 @@ print("======================${response.body}");
     }
   }
 
- void deletebaner(int id) async {
+ void deletecategory(int id) async {
     try {
       var token = await gettokenFromPrefs();
 
       var response = await http.delete(
-        Uri.parse('https://crown-florida-alabama-limitation.trycloudflare.com/admin/HOMFOO-delete-banner/$id/'),
+        Uri.parse('https://crown-florida-alabama-limitation.trycloudflare.com/admin/HOMFOO-delete-category/$id/'),
         headers: {
           'Authorization': '$token',
         },
@@ -173,11 +167,11 @@ print("======================${response.body}");
 print(response.statusCode);
 print(response.body);
       if (response.statusCode == 200) {
-        getbanner();
+        getcategory();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            backgroundColor: Colors.green,
-            content: Text('deleted successfully!'),
+            backgroundColor: Colors.red,
+            content: Text('Address deleted successfully!'),
           ),
         );
       }
@@ -225,10 +219,10 @@ print(response.body);
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
+                  _buildTextField("name", category,
+                      isEditable: true),
 
-                  _buildTextField("name", category, isEditable: true),
-
-
+                      
                   Stack(
                     children: [
                       TextFormField(
@@ -267,18 +261,18 @@ print(response.body);
                         ),
                     ],
                   ),
-
-                  const SizedBox(height: 10),
-
-                  // Display picked image
                  
-                  
+
+                  const SizedBox(height: 20),
+
                   // Add Address Button
                   ElevatedButton(
-                    onPressed: updatebanaer,
+                    onPressed:(){
+                      updatecategory();} ,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
-                      padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 100, vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
@@ -296,16 +290,17 @@ print(response.body);
                   const SizedBox(height: 20),
 
                   // Display Address List
-                  Banner.isNotEmpty
+                  address.isNotEmpty
                       ? ListView.builder(
                           shrinkWrap: true,
                           physics: NeverScrollableScrollPhysics(),
-                          itemCount: Banner.length,
+                          itemCount: address.length,
                           itemBuilder: (context, index) {
                             return Card(
                               color: Colors.white,
                               elevation: 3,
-                              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 5),
+                              margin: const EdgeInsets.symmetric(
+                                  vertical: 8, horizontal: 5),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -315,22 +310,25 @@ print(response.body);
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                Banner[index]['name'] ?? '',
+                                                address[index]['name'] ?? '',
                                                 style: const TextStyle(
                                                     fontSize: 16,
-                                                    fontWeight: FontWeight.bold),
+                                                    fontWeight:
+                                                        FontWeight.bold),
                                               ),
                                               const SizedBox(height: 5),
-                                              Banner[index]['image'] != null
+                                              address[index]['image'] != null
                                                   ? Image.network(
-                                                      'https://crown-florida-alabama-limitation.trycloudflare.com${Banner[index]['image']}',
+                                                      'https://crown-florida-alabama-limitation.trycloudflare.com${address[index]['image']}',
                                                       height: 50,
                                                       width: 50,
                                                       fit: BoxFit.cover,
@@ -342,15 +340,20 @@ print(response.body);
                                         Row(
                                           children: [
                                             IconButton(
-                                              icon: const Icon(Icons.edit, color: Colors.blue),
+                                              icon: const Icon(Icons.edit,
+                                                  color: Colors.blue),
                                               onPressed: () {
-                                                Navigator.push(context, MaterialPageRoute(builder: (context) => update_Banners(id: Banner[index]['id'])));
+
+                                               
+                                                
                                               },
                                             ),
                                             IconButton(
-                                              icon: const Icon(Icons.delete, color: Colors.red),
+                                              icon: const Icon(Icons.delete,
+                                                  color: Colors.red),
                                               onPressed: () {
-                                                deletebaner(Banner[index]['id']);
+                                                deletecategory(address[index]['id']);
+                                                // Add your delete functionality here
                                               },
                                             ),
                                           ],
@@ -366,7 +369,7 @@ print(response.body);
                       : const Padding(
                           padding: EdgeInsets.only(top: 20),
                           child: Text(
-                            "No addresses found!",
+                            "No category found!",
                             style: TextStyle(fontSize: 16, color: Colors.grey),
                           ),
                         ),

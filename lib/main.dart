@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:homefoo_users/ADMIN/admin_home.dart';
 import 'package:homefoo_users/home.dart';
 import 'package:homefoo_users/login.dart';
-
-
-
+import 'package:homefoo_users/maphome.dart';
+import 'package:homefoo_users/register.dart';
 void main(){
   runApp(homefoo());
 }
@@ -37,8 +35,9 @@ class manege extends StatefulWidget {
 }
 
 class _manegeState extends State<manege> {
+
   @override
   Widget build(BuildContext context) {
-    return AdminHome();
+    return login();
   }
 }

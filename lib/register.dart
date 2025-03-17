@@ -2,7 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:homefoo_users/api.dart';
 import 'package:homefoo_users/home.dart';
+import 'package:homefoo_users/login.dart';
 import 'package:homefoo_users/main.dart';
 
 
@@ -28,7 +30,7 @@ class _RegisterState extends State<Register> {
   TextEditingController phone= TextEditingController();
   TextEditingController password= TextEditingController();
     TextEditingController Confirm= TextEditingController();
-    var regurl="https://crown-florida-alabama-limitation.trycloudflare.com/register/";
+    var regurl="$api/register/";
 
 
 
@@ -83,7 +85,7 @@ class _RegisterState extends State<Register> {
         );
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => home()),
+          MaterialPageRoute(builder: (context) => login()),
         );
       } else if (response.statusCode == 400) {
         // Show alert box for validation errors
@@ -334,13 +336,16 @@ class _RegisterState extends State<Register> {
                                 Navigator.push(context, MaterialPageRoute(builder: (context)=>homefoo()));
                               },
                               child: Text("Forgot Password ?",style: TextStyle(color:Color.fromARGB(255, 172, 172, 172)),)),
-                              SizedBox(width: 100,),
+                              Spacer(),
           
-                              GestureDetector(
-                              onTap: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (context)=>homefoo()));
-                              },
-                              child: Text("Register Now",style: TextStyle(color:Color.fromARGB(255, 172, 172, 172)),)),
+                              Padding(
+                                padding: const EdgeInsets.only(right: 35),
+                                child: GestureDetector(
+                                onTap: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (context)=>login()));
+                                },
+                                child: Text("SignIn",style: TextStyle(color:Color.fromARGB(255, 172, 172, 172)),)),
+                              ),
                                   ],
                                 ),
                                

@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:homefoo_users/ADMIN/update_baner.dart';
-import 'package:homefoo_users/ADMIN/update_categoy.dart';
+import 'package:homefoo_users/admin/update_banner.dart';
 import 'package:homefoo_users/api.dart';
 import 'package:homefoo_users/userprofile.dart';
 import 'package:http/http.dart' as http;
@@ -42,7 +41,7 @@ class _admin_BannersState extends State<admin_Banners> {
       var userId = await getUserIdFromPrefs();
       var token = await gettokenFromPrefs();
       var response = await http.get(
-        Uri.parse('https://crown-florida-alabama-limitation.trycloudflare.com/admin/HOMFOO-banners/'),
+        Uri.parse('$api/admin/HOMFOO-banners/'),
         headers: {
           'Authorization': '$token',
           'Content-Type': 'application/json',
@@ -79,7 +78,7 @@ print("======================${response.body}");
 
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('https://crown-florida-alabama-limitation.trycloudflare.com/admin/HOMFOO-banner/'),
+        Uri.parse('$api/admin/HOMFOO-banner/'),
       );
 
       request.headers['Authorization'] = '$token';
@@ -133,7 +132,7 @@ print("======================${response.body}");
       var token = await gettokenFromPrefs();
 
       var response = await http.delete(
-        Uri.parse('https://crown-florida-alabama-limitation.trycloudflare.com/admin/HOMFOO-delete-banner/$id/'),
+        Uri.parse('$api/admin/HOMFOO-delete-banner/$id/'),
         headers: {
           'Authorization': '$token',
         },
@@ -298,7 +297,7 @@ print(response.body);
                                               const SizedBox(height: 5),
                                               Banner[index]['image'] != null
                                                   ? Image.network(
-                                                      'https://crown-florida-alabama-limitation.trycloudflare.com${Banner[index]['image']}',
+                                                      '$api${Banner[index]['image']}',
                                                       height: 50,
                                                       width: 50,
                                                       fit: BoxFit.cover,

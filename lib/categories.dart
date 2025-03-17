@@ -38,7 +38,7 @@ class _categoriesviewState extends State<categoriesview> {
 
   Future<void> fetchCatProducts() async {
     try {
-      final response = await http.get(Uri.parse(a.productview));
+      final response = await http.get(Uri.parse('$api/products/'));
       print('Response: ${response.statusCode}');
 
       if (response.statusCode == 200) {
@@ -50,7 +50,7 @@ class _categoriesviewState extends State<categoriesview> {
         for (var productData in productsData) {
           // Fetch image URL
           String imageUrl =
-              "https://crown-florida-alabama-limitation.trycloudflare.com/${productData['image1']}";
+              "$api/${productData['image1']}";
           // You might need to adjust the URL based on your API response structure
 
           productsList.add({
@@ -83,7 +83,7 @@ class _categoriesviewState extends State<categoriesview> {
 
   Future<void> fetchResturents() async {
     try {
-      final response = await http.get(Uri.parse(a.restaurants));
+      final response = await http.get(Uri.parse('$api/restaurants/'));
       print('Response: ${response.statusCode}');
 
       if (response.statusCode == 200) {
@@ -94,7 +94,7 @@ class _categoriesviewState extends State<categoriesview> {
 
         for (var productData in productsData) {
           String imageUrl =
-              "https://crown-florida-alabama-limitation.trycloudflare.com/${productData['image']}";
+              "$api/${productData['image']}";
           productsList.add({
             'id': productData['id'],
             'name': productData['name'],
@@ -173,9 +173,8 @@ class _categoriesviewState extends State<categoriesview> {
     );
   }
 
-  api a = api();
   PageController _pageController = PageController();
-  var url = "https://crown-florida-alabama-limitation.trycloudflare.com/categories/";
+  var url = "$api/categories/";
   late Timer _timer;
   List<String> bannerImageBase64Strings = [];
   String? _currentAddress;
@@ -242,48 +241,40 @@ class _categoriesviewState extends State<categoriesview> {
   }
 
   //category
+Future<void> fetchCategories() async {
+  try {
+   
+      final response = await http.get(Uri.parse(url));
+print("Response: ${response.statusCode}");
+print('Response: ${response.body}');
 
-  Future<void> fetchCategories() async {
-    try {
-      final String key = 'categories_data';
-      String? localData = await getDataLocally(key);
+      if (response.statusCode == 200) {
+        final List<dynamic> categoriesData = jsonDecode(response.body)['data']; // Extract 'data' from response
+        List<Map<String, dynamic>> categoriesList = [];
 
-      if (localData != null) {
-        setState(() {
-          // Use local data
-          categories = jsonDecode(localData).cast<Map<String, dynamic>>();
-        });
-      } else {
-        final response = await http.get(Uri.parse(url));
-
-        if (response.statusCode == 200) {
-          final List<dynamic> categoriesData = jsonDecode(response.body);
-          List<Map<String, dynamic>> categoriesList = [];
-
-          for (var categoryData in categoriesData) {
-            String imageUrl = "${a.base}" + categoryData['image'];
-            String base64Image = await convertImageToBase64(imageUrl);
-            categoriesList.add({
-              'id': categoryData['id'],
-              'name': categoryData['name'],
-              'imageBase64': base64Image,
-            });
-          }
-
-          setState(() {
-            categories = categoriesList;
+        for (var categoryData in categoriesData) {
+             String imageUrl =
+              "${categoryData['image']}";
+       
+          categoriesList.add({
+            'id': categoryData['id'],
+            'name': categoryData['name'],
+            'image': imageUrl,
           });
-
-          // Store data locally
-          await storeDataLocally(key, jsonEncode(categoriesList));
-        } else {
-          throw Exception('Failed to load categories');
         }
-      }
-    } catch (error) {
-      print('Error fetching categories: $error');
+
+        setState(() {
+          categories = categoriesList;
+          print(categories);
+        });
+
+     
     }
+  } catch (error) {
+    print('Error fetching categories: $error');
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -392,27 +383,31 @@ class _categoriesviewState extends State<categoriesview> {
                               itemCount: categories.length,
                               itemBuilder: (BuildContext context, int index) {
                                 return GestureDetector(
-                                  onTap: () {},
+                                  onTap: () {
+                                    
+                                  },
                                   child: Card(
                                     child: Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: Column(
                                         children: [
-                                          Container(
-                                            width: 78,
-                                            height: 78,
-                                            decoration: BoxDecoration(
-                                              color: Color.fromARGB(
-                                                  255, 232, 232, 232),
-                                              image: DecorationImage(
-                                                image: MemoryImage(base64Decode(
-                                                    categories[index]
-                                                        ['imageBase64'])),
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(40),
-                                            ),
-                                          ),
+                                         Container(
+  width: 78,
+  height: 78,
+  decoration: BoxDecoration(
+    color: Color.fromARGB(255, 232, 232, 232),
+    borderRadius: BorderRadius.circular(40),
+  ),
+  child: ClipRRect(
+    borderRadius: BorderRadius.circular(40),
+    child: Image.network(
+     '$api${categories[index]['image']}', // Use image URL directly
+      width: 78,
+      height: 78,
+      fit: BoxFit.cover,
+    ),
+  ),
+),
                                           SizedBox(height: 4),
                                           Text(
                                             categories[index]['name'],

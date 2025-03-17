@@ -8,11 +8,12 @@ import 'package:flutter/widgets.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:homefoo_users/api.dart';
+import 'package:homefoo_users/cart_view.dart';
 import 'package:homefoo_users/categories.dart';
+import 'package:homefoo_users/category_wise_restaurants.dart';
+import 'package:homefoo_users/userprofile.dart';
 import 'package:homefoo_users/maphome.dart';
 import 'package:homefoo_users/rest.items.dart';
-
-
 
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -27,8 +28,11 @@ class home extends StatefulWidget {
 }
 
 class _homeState extends State<home> {
+  TextEditingController _searchController = TextEditingController();
+  List<Map<String, dynamic>> filteredRestaurants = [];
+
+  @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _getCurrentPosition();
     _startTimer();
@@ -36,6 +40,25 @@ class _homeState extends State<home> {
     fetchCategories();
     fetchResturents();
     fetchCatProducts();
+    _searchController.addListener(_filterRestaurants);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _pageController.dispose();
+    _timer.cancel();
+    super.dispose();
+  }
+
+  void _filterRestaurants() {
+    setState(() {
+      filteredRestaurants = restaurant.where((restaurant) {
+        return restaurant['name']
+            .toLowerCase()
+            .contains(_searchController.text.toLowerCase());
+      }).toList();
+    });
   }
 
   List<Map<String, dynamic>> restaurant = [];
@@ -45,7 +68,7 @@ class _homeState extends State<home> {
 
   Future<void> fetchCatProducts() async {
     try {
-      final response = await http.get(Uri.parse(a.productview));
+      final response = await http.get(Uri.parse('$api/products/'));
       print('Response: ${response.statusCode}');
 
       if (response.statusCode == 200) {
@@ -56,8 +79,7 @@ class _homeState extends State<home> {
 
         for (var productData in productsData) {
           // Fetch image URL
-          String imageUrl =
-              "https://crown-florida-alabama-limitation.trycloudflare.com/${productData['image1']}";
+          String imageUrl = "$api/${productData['image1']}";
           // You might need to adjust the URL based on your API response structure
 
           productsList.add({
@@ -87,7 +109,7 @@ class _homeState extends State<home> {
 
   Future<void> fetchResturents() async {
     try {
-      final response = await http.get(Uri.parse(a.restaurants));
+      final response = await http.get(Uri.parse('$api/restaurants/'));
       print('Response: ${response.statusCode}');
 
       if (response.statusCode == 200) {
@@ -97,8 +119,7 @@ class _homeState extends State<home> {
         List<bool> favoritesList = [];
 
         for (var productData in productsData) {
-          String imageUrl =
-              "https://crown-florida-alabama-limitation.trycloudflare.com/${productData['image']}";
+          String imageUrl = "$api/${productData['image']}";
           productsList.add({
             'id': productData['id'],
             'name': productData['name'],
@@ -119,6 +140,7 @@ class _homeState extends State<home> {
         setState(() {
           restaurant = productsList;
           isFavorite = favoritesList;
+          filteredRestaurants = productsList;
         });
       } else {
         throw Exception('Failed to load category products');
@@ -146,7 +168,6 @@ class _homeState extends State<home> {
           ),
           child: Container(
             height: 80,
-          
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -178,21 +199,13 @@ class _homeState extends State<home> {
     );
   }
 
-  api a = api();
   PageController _pageController = PageController();
-  var url = "https://crown-florida-alabama-limitation.trycloudflare.com/admin/HOMFOO-categories";
+  var url = "$api/categories/";
   late Timer _timer;
   List<String> bannerImageBase64Strings = [];
   String? _currentAddress;
   Position? _currentPosition;
   List<Map<String, dynamic>> categories = [];
-  @override
-  void dispose() {
-    _pageController.dispose();
-    _timer.cancel();
-    super.dispose();
-  }
-
   Future<bool> _handleLocationPermission() async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -244,10 +257,11 @@ class _homeState extends State<home> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('userId');
   }
+
   Future<String?> gettokenFromPrefs() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
-    }
+  }
 
 //current location
 
@@ -292,46 +306,47 @@ class _homeState extends State<home> {
 
 //banner
 
-Future<void> fetchBanners() async {
-  final String key = 'banner_data';
-  String? localData = await getDataLocally(key);
+  Future<void> fetchBanners() async {
+    final String key = 'banner_data';
+    String? localData = await getDataLocally(key);
 
-  if (localData != null) {
-    setState(() {
-      // Use local data
-      bannerImageBase64Strings = jsonDecode(localData)['banners'].cast<String>();
-    });
-  } else {
-    try {
-      final response = await http.get(Uri.parse(a.banner));
+    if (localData != null) {
+      setState(() {
+        // Use local data
+        bannerImageBase64Strings =
+            jsonDecode(localData)['banners'].cast<String>();
+      });
+    } else {
+      try {
+        final response = await http.get(Uri.parse('$api/banners/'));
 
-      if (response.statusCode == 200) {
-        final dynamic responseData = jsonDecode(response.body)['data'];
+        if (response.statusCode == 200) {
+          final dynamic responseData = jsonDecode(response.body)['data'];
 
-        if (responseData is List) {
-          List<String> base64Strings = [];
+          if (responseData is List) {
+            List<String> base64Strings = [];
 
-          for (var bannerData in responseData) {
-            String imageUrl = "${a.base}" + bannerData['image'];
-            base64Strings.add(await convertImageToBase64(imageUrl));
+            for (var bannerData in responseData) {
+              String imageUrl = "${api}" + bannerData['image'];
+              base64Strings.add(await convertImageToBase64(imageUrl));
+            }
+
+            setState(() {
+              bannerImageBase64Strings = base64Strings;
+            });
+
+            await storeDataLocally(key, jsonEncode({'banners': base64Strings}));
+          } else {
+            throw Exception('Invalid response format');
           }
-
-          setState(() {
-            bannerImageBase64Strings = base64Strings;
-          });
-
-          await storeDataLocally(key, jsonEncode({'banners': base64Strings}));
         } else {
-          throw Exception('Invalid response format');
+          throw Exception('Failed to load banners');
         }
-      } else {
-        throw Exception('Failed to load banners');
+      } catch (error) {
+        print('Error fetching banners: $error');
       }
-    } catch (error) {
-      print('Error fetching banners: $error');
     }
   }
-}
 
   Future<String> convertImageToBase64(String imageUrl) async {
     final response = await http.get(Uri.parse(imageUrl));
@@ -342,22 +357,66 @@ Future<void> fetchBanners() async {
     }
   }
 
+  List<Map<String, dynamic>> cartdata = [];
+  Future<String?> getTokenFromPrefs() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
+  }
+
+  Future<void> fetchCartData() async {
+    try {
+      final token = await getTokenFromPrefs();
+
+      final response = await http.get(
+        Uri.parse("$api/cart/"),
+        headers: {
+          'Authorization': ' $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print("cart data is ${response.body}");
+      if (response.statusCode == 200) {
+        final parsed = jsonDecode(response.body);
+        final List<dynamic> cartsData = parsed['data'];
+        List<Map<String, dynamic>> cartList = [];
+        for (var cartData in cartsData) {
+          var product = cartData['product'];
+          cartList.add({
+            'id': product['id'],
+            'name': product['name'],
+            'image': product['image1'],
+            'quantity': cartData['quantity'],
+            'price': product['price'],
+          });
+        }
+        setState(() {
+          cartdata = cartList;
+        });
+      } else {
+        throw Exception('Failed to load cart data');
+      }
+    } catch (error) {
+      print('Error fetching cart data: $error');
+    }
+  }
+
   //category
 
-Future<void> fetchCategories() async {
-  try {
-   
+  Future<void> fetchCategories() async {
+    try {
       final response = await http.get(Uri.parse(url));
 
+      print("=========???????????????${response.body}");
 
       if (response.statusCode == 200) {
-        final List<dynamic> categoriesData = jsonDecode(response.body)['data']; // Extract 'data' from response
+        final List<dynamic> categoriesData =
+            jsonDecode(response.body)['data']; // Extract 'data' from response
         List<Map<String, dynamic>> categoriesList = [];
 
         for (var categoryData in categoriesData) {
-             String imageUrl =
-              "https://crown-florida-alabama-limitation.trycloudflare.com${categoryData['image']}";
-       
+          String imageUrl = "$api${categoryData['image']}";
+
           categoriesList.add({
             'id': categoryData['id'],
             'name': categoryData['name'],
@@ -368,13 +427,11 @@ Future<void> fetchCategories() async {
         setState(() {
           categories = categoriesList;
         });
-
-     
+      }
+    } catch (error) {
+      print('Error fetching categories: $error');
     }
-  } catch (error) {
-    print('Error fetching categories: $error');
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -384,403 +441,431 @@ Future<void> fetchCategories() async {
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Container(
-            child: Column(children: [
-          Container(
-            decoration: BoxDecoration(
-              boxShadow: [
-                BoxShadow(
-                  color: const Color.fromARGB(255, 183, 183, 183)
-                      .withOpacity(0.5), // Shadow color
-                  spreadRadius: 5,
-                  blurRadius: 10,
-                  offset: Offset(0, 3), // changes position of shadow
-                ),
-              ],
-
-              color: Colors.white, // Background color
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(top: 20),
-              child: Row(
-                children: [
-                  Column(
-                    children: [
-                      Image.asset(
-                        "lib/assets/logo.png",
-                        width: 70,
-                        height: 70,
-                        fit: BoxFit.cover,
-                      ),
-                    ],
-                  ),
-                  Text(
-                    ' ${_currentAddress ?? ""}',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Spacer(),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Image.asset(
-                          "lib/assets/notification.png",
-                          width: 20,
-                          height: 20,
-                          fit: BoxFit.cover,
-                        ),
-                      ],
-                    ),
-                  ),
-                   Padding(
-                    padding: const EdgeInsets.only(right: 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        GestureDetector(
-                          onTap:(){
-                            Navigator.push(context, MaterialPageRoute(builder: (context)=>MapScreen()));
-
-                          },
-                          child: Image.asset(
-                            "lib/assets/loc_r.png",
-                            width: 25,
-                            height: 25,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(
-            height: 17,
-          ),
-          Padding(
-            padding: const EdgeInsets.only(),
-            child: Container(
-              color: Colors.white,
-              child: Column(
-                children: [
-                  bannerImageBase64Strings.isEmpty
-                      ? Center(child: CircularProgressIndicator())
-                      : SizedBox(
-                          height: 160,
-                          child: PageView.builder(
-                            controller: _pageController,
-                            itemCount: bannerImageBase64Strings.length,
-                            itemBuilder: (context, index) {
-                              return Container(
-                                width: carouselWidth,
-                                margin: EdgeInsets.symmetric(horizontal: 5.0),
-                                decoration: BoxDecoration(
-                                  color: Color.fromARGB(255, 255, 255, 255),
-                                  borderRadius: BorderRadius.circular(10.0),
-                                ),
-                                child: Image.memory(
-                                  base64Decode(bannerImageBase64Strings[index]),
-                                  fit: BoxFit.contain,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                categories.isEmpty
-  ? Center(child: CircularProgressIndicator())
-  : SizedBox(
-      height: 115,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: categories.length,
-        itemBuilder: (BuildContext context, int index) {
-          return GestureDetector(
-            onTap: () {},
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  Container(
-                    width: 78,
-                    height: 78,
-                    decoration: BoxDecoration(
-                      color: Color.fromARGB(255, 225, 225, 225),
-                      borderRadius: BorderRadius.circular(40),
-                    ),
-                    child: Image.network(
-                      categories[index]['imageBase64'], // Use image URL directly
-                      width: 28,
-                      height: 28,
-                     
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    categories[index]['name'],
-                    style: TextStyle(fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    
-
-                        ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      left: 20,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Recemmented Products",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(
-                    height: 5,
-                  ),
-                  Products != null
-                      ? Container(
-                          height:
-                              200, // Set a fixed height for the horizontal list
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: Products.length,
-                            itemBuilder: (context, index) {
-                              var product = Products[index];
-                              return Padding(
-                                padding:
-                                    const EdgeInsets.only(left: 10, right: 10),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    // Navigator.push(context, MaterialPageRoute(builder: (context)=>productbigview(Products[index]['id'])));
-                                  },
-                                  child: Container(
-                                    width:
-                                        160, // Set the width of each item in the horizontal list
-                                    padding: EdgeInsets.all(8.0),
-                                    decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius:
-                                            BorderRadius.circular(10.0),
-                                        border: Border.all(
-                                            color: const Color.fromARGB(
-                                                    255, 211, 210, 210)
-                                                .withOpacity(0.5))),
-                                    child: Column(
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(8.0),
-                                          child: Image.network(
-                                            product['image'],
-                                            width: 110,
-                                            height: 110,
-                                            fit: BoxFit.cover,
-                                          ),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(product["name"],style: TextStyle(fontWeight: FontWeight.bold),),
-                                              Text(
-                                                '\$ ${product['price']}',
-                                                style: TextStyle(
-                                                    color: Colors.green),
-                                              ),
-
-                                                Row(
-                                  children: [
-                                    Image.asset(
-                                      "lib/assets/rating.png",
-                                      width: 20,
-                                      height: 20,
-                                      fit: BoxFit.cover,
-                                    ),
-                                    Text("4.9 (30+ Review )"),
-                                  ],
-                                ),
-
-
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        )
-                      : Center(child: CircularProgressIndicator()),
-                  SizedBox(
-                    height: 10,
-                  ),
-                  restaurant != null
-                      ? Container(
-  color: const Color.fromARGB(255, 255, 255, 255),
-  child: Column(
-    children: [
-      Padding(
-        padding: const EdgeInsets.only(left: 20),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Text(
-              "Explore Restaurants",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-          ],
-        ),
-      ),
-      ListView.builder(
-        shrinkWrap: true,
-        physics: NeverScrollableScrollPhysics(),
-        itemCount: restaurant.length,
-        itemBuilder: (context, index) {
-          var restaurantItem = restaurant[index];
-          return Padding(
-            padding: const EdgeInsets.only(left: 10, right: 10),
-            child: GestureDetector(
-              onTap: () {
-            
-                Navigator.push(context, MaterialPageRoute(builder: (context)=>rest_items(restaurant_id:restaurant[index]['id'],name:restaurant[index]['name'])));
-                 
-              },
-              child: Container(
-                height: 170,
-                margin: EdgeInsets.symmetric(vertical: 8.0),
+          child: Column(
+            children: [
+              Container(
                 decoration: BoxDecoration(
-                  color: Color.fromARGB(255, 255, 255, 255),
-                  borderRadius: BorderRadius.circular(10.0),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
-                      spreadRadius: 2,
-                      blurRadius: 3,
-                      offset: Offset(0, 2),
+                      color: const Color.fromARGB(255, 183, 183, 183)
+                          .withOpacity(0.5), // Shadow color
+                      spreadRadius: 5,
+                      blurRadius: 10,
+                      offset: Offset(0, 3), // changes position of shadow
                     ),
                   ],
+
+                  color: Colors.white, // Background color
                 ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Column(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 20),
+                  child: Row(
+                    children: [
+                      Column(
+                        children: [
+                          Image.asset(
+                            "lib/assets/logo.png",
+                            width: 70,
+                            height: 70,
+                            fit: BoxFit.cover,
+                          ),
+                        ],
+                      ),
+                      Text(
+                        ' ${_currentAddress ?? ""}',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      Spacer(),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Container(
-                              height: 170,
-                              width: 160,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(10),
-                                  bottomLeft: Radius.circular(10),
-                                ),
-                                child: Image.network(
-                                  restaurantItem['image'] ?? '',
-                                  width: 110,
-                                  height: 110,
-                                  fit: BoxFit.cover,
-                                ),
+                            Image.asset(
+                              "lib/assets/notification.png",
+                              width: 20,
+                              height: 20,
+                              fit: BoxFit.cover,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => MapScreen()));
+                              },
+                              child: Image.asset(
+                                "lib/assets/loc_r.png",
+                                width: 25,
+                                height: 25,
+                                fit: BoxFit.cover,
                               ),
                             ),
                           ],
                         ),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 20, bottom: 0),
-                          child: Container(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                Text(
-                                  restaurantItem["name"] ?? '',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                                Text(
-                                  ' ${restaurantItem['location'] ?? ''}',
-                                  style: TextStyle(
-                                    color: Color.fromARGB(255, 116, 115, 115),
-                                  ),
-                                ),
-                                SizedBox(height: 5.0),
-                                Row(
-                                  children: [
-                                    Image.asset(
-                                      "lib/assets/rating.png",
-                                      width: 20,
-                                      height: 20,
-                                      fit: BoxFit.cover,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: 17,
+              ),
+              Padding(
+                padding: const EdgeInsets.only(),
+                child: Container(
+                  color: Colors.white,
+                  child: Column(
+                    children: [
+                      bannerImageBase64Strings.isEmpty
+                          ? Center(child: CircularProgressIndicator())
+                          : SizedBox(
+                              height: 160,
+                              child: PageView.builder(
+                                controller: _pageController,
+                                itemCount: bannerImageBase64Strings.length,
+                                itemBuilder: (context, index) {
+                                  return Container(
+                                    width: carouselWidth,
+                                    margin: EdgeInsets.symmetric(horizontal: 5.0),
+                                    decoration: BoxDecoration(
+                                      color: Color.fromARGB(255, 255, 255, 255),
+                                      borderRadius: BorderRadius.circular(10.0),
                                     ),
-                                    Text("4.9 (30+ Review )"),
-                                  ],
-                                ),
-                                SizedBox(height: 40),
-                                Row(
-                                  children: [
-                                    Image.asset(
-                                      "lib/assets/offer.png",
-                                      width: 20,
-                                      height: 20,
-                                      fit: BoxFit.cover,
+                                    child: Image.memory(
+                                      base64Decode(bannerImageBase64Strings[index]),
+                                      fit: BoxFit.contain,
                                     ),
-                                    Text(
-                                      " 10% OFF Up to ₹80 ",
-                                      style: TextStyle(color: Colors.blue),
+                                  );
+                                },
+                              ),
+                            ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      categories.isEmpty
+                          ? Center(child: CircularProgressIndicator())
+                          : SizedBox(
+                              height: 115,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: categories.length,
+                                itemBuilder: (BuildContext context, int index) {
+                                  return GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  CategoryWiseRestaurants(
+                                                      categoryId: categories[index]
+                                                          ['id'])));
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                            width: 78,
+                                            height: 78,
+                                            decoration: BoxDecoration(
+                                              color: Color.fromARGB(
+                                                  255, 225, 225, 225),
+                                              borderRadius:
+                                                  BorderRadius.circular(40),
+                                            ),
+                                            child: Image.network(
+                                              categories[index][
+                                                  'imageBase64'], // Use image URL directly
+                                              width: 28,
+                                              height: 28,
+                                            ),
+                                          ),
+                                          SizedBox(height: 4),
+                                          Text(
+                                            categories[index]['name'],
+                                            style: TextStyle(fontSize: 12),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ],
-                                ),
-                              ],
+                                  );
+                                },
+                              ),
+                            ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          left: 20,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Recemmented Products",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(
+                        height: 5,
+                      ),
+                      Products != null
+                          ? Container(
+                              height:
+                                  200, // Set a fixed height for the horizontal list
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: Products.length,
+                                itemBuilder: (context, index) {
+                                  var product = Products[index];
+                                  return Padding(
+                                    padding:
+                                        const EdgeInsets.only(left: 10, right: 10),
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        // Navigator.push(context, MaterialPageRoute(builder: (context)=>productbigview(Products[index]['id'])));
+                                      },
+                                      child: Container(
+                                        width:
+                                            160, // Set the width of each item in the horizontal list
+                                        padding: EdgeInsets.all(8.0),
+                                        decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                                BorderRadius.circular(10.0),
+                                            border: Border.all(
+                                                color: const Color.fromARGB(
+                                                        255, 211, 210, 210)
+                                                    .withOpacity(0.5))),
+                                        child: Column(
+                                          children: [
+                                            ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(8.0),
+                                              child: Image.network(
+                                                product['image'],
+                                                width: 110,
+                                                height: 110,
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.only(),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    product["name"],
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  ),
+                                                  Text(
+                                                    '\$ ${product['price']}',
+                                                    style: TextStyle(
+                                                        color: Colors.green),
+                                                  ),
+                                                  Row(
+                                                    children: [
+                                                      Image.asset(
+                                                        "lib/assets/rating.png",
+                                                        width: 20,
+                                                        height: 20,
+                                                        fit: BoxFit.cover,
+                                                      ),
+                                                      Text("4.9 (30+ Review )"),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            )
+                          : Center(child: CircularProgressIndicator()),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Search restaurants...',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            suffixIcon: IconButton(
+                              onPressed: () {
+                                _searchController.clear();
+                              },
+                              icon: Icon(Icons.clear),
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                      // SizedBox(height: 10),
+                      // Padding(
+                      //   padding: const EdgeInsets.only(left: 20),
+                      //   child: Row(
+                      //     mainAxisAlignment: MainAxisAlignment.start,
+                      //     children: [
+                      //       Text(
+                      //         "Explore Restaurants",
+                      //         style: TextStyle(
+                      //           fontWeight: FontWeight.bold,
+                      //           fontSize: 16,
+                      //         ),
+                      //       ),
+                      //     ],
+                      //   ),
+                      // ),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: filteredRestaurants.length,
+                        itemBuilder: (context, index) {
+                          var restaurantItem = filteredRestaurants[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(left: 10, right: 10),
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => rest_items(
+                                      restaurant_id: restaurantItem['id'],
+                                      name: restaurantItem['name'],
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                height: 170,
+                                margin: EdgeInsets.symmetric(vertical: 8.0),
+                                decoration: BoxDecoration(
+                                  color: Color.fromARGB(255, 255, 255, 255),
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.5),
+                                      spreadRadius: 2,
+                                      blurRadius: 3,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Column(
+                                          children: [
+                                            Container(
+                                              height: 170,
+                                              width: 160,
+                                              child: ClipRRect(
+                                                borderRadius: BorderRadius.only(
+                                                  topLeft: Radius.circular(10),
+                                                  bottomLeft: Radius.circular(10),
+                                                ),
+                                                child: Image.network(
+                                                  restaurantItem['image'] ?? '',
+                                                  width: 110,
+                                                  height: 110,
+                                                  fit: BoxFit.cover,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 20, bottom: 0),
+                                          child: Container(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              mainAxisAlignment: MainAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  restaurantItem["name"] ?? '',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 15,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  ' ${restaurantItem['location'] ?? ''}',
+                                                  style: TextStyle(
+                                                    color: Color.fromARGB(255, 116, 115, 115),
+                                                  ),
+                                                ),
+                                                SizedBox(height: 5.0),
+                                                Row(
+                                                  children: [
+                                                    Image.asset(
+                                                      "lib/assets/rating.png",
+                                                      width: 20,
+                                                      height: 20,
+                                                      fit: BoxFit.cover,
+                                                    ),
+                                                    Text("4.9 (30+ Review )"),
+                                                  ],
+                                                ),
+                                                SizedBox(height: 40),
+                                                Row(
+                                                  children: [
+                                                    Image.asset(
+                                                      "lib/assets/offer.png",
+                                                      width: 20,
+                                                      height: 20,
+                                                      fit: BoxFit.cover,
+                                                    ),
+                                                    Text(
+                                                      " 10% OFF Up to ₹80 ",
+                                                      style: TextStyle(color: Colors.blue),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        },
-      ),
-    ],
-  ),
-)
-
-                      : Center(
-                          child:
-                              CircularProgressIndicator(), // Show a loading indicator while fetching data
-                        ),
-                ],
-              ),
-            ),
+            ],
           ),
-        ])),
+        ),
       ),
       bottomNavigationBar: Container(
         color: Color.fromARGB(255, 244, 244, 244),
@@ -810,8 +895,8 @@ Future<void> fetchCategories() async {
               GButton(
                 icon: Icons.shopping_bag,
                 onPressed: () {
-                  Navigator.push(
-                      context, MaterialPageRoute(builder: (context) => categoriesview()));
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => View_Cart()));
                   // Navigate to Cart page
                 },
               ),
@@ -824,8 +909,8 @@ Future<void> fetchCategories() async {
               GButton(
                 icon: Icons.person,
                 onPressed: () {
-                  Navigator.push(
-                      context, MaterialPageRoute(builder: (context) => home()));
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => UserProfile()));
                   // Navigate to Profile page
                 },
               ),

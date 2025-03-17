@@ -4,11 +4,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:homefoo_users/ADMIN/add_banner.dart';
-import 'package:homefoo_users/ADMIN/add_restaurant.dart';
-import 'package:homefoo_users/ADMIN/categoreis.dart';
+import 'package:homefoo_users/admin/addcategory.dart';
+import 'package:homefoo_users/admin/addresturent.dart';
 import 'package:homefoo_users/categories.dart';
 import 'package:http/http.dart' as http;
 import 'package:homefoo_users/api.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class AdminHome extends StatefulWidget {
   const AdminHome({super.key});
@@ -24,16 +27,26 @@ class _AdminHomeState extends State<AdminHome> {
     fetchResturents();
   }
 
-  api a = new api();
+  // api a = new api();
   List<Map<String, dynamic>> restaurant = [];
   late List<bool> isFavorite;
 
 
+  Future<String?> getUserIdFromPrefs() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userId');
+  }
+
+  Future<String?> gettokenFromPrefs() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
+  }
+
   Future<void> fetchResturents() async {
     try {
-      final response = await http.get(Uri.parse(a.rest_pending));
-      print('Response: ${response.statusCode}');
-      print('Response: ${response.body}');
+      final response = await http.get(Uri.parse('$api/admin/HOMFOO-restaurants/'));
+      print('Responseeeeeeeeeeeee: ${response.statusCode}');
+      print('Responseeeeeeeeeeeeeeeeeeeeee: ${response.body}');
       if (response.statusCode == 200) {
         final parsed = jsonDecode(response.body);
         if (parsed is List) {
@@ -44,7 +57,7 @@ class _AdminHomeState extends State<AdminHome> {
           for (var productData in productsData) {
             if (productData is Map<String, dynamic>) {
               String imageUrl =
-                  "https://crown-florida-alabama-limitation.trycloudflare.com/${productData['image']}";
+                  "$api${productData['image']}";
               productsList.add({
                 'id': productData['id'],
                 'name': productData['name'],
@@ -73,6 +86,91 @@ class _AdminHomeState extends State<AdminHome> {
       print('Error fetching category products: $error');
     }
   }
+
+ 
+  Future<void> approverestaurant(dynamic restaurantid) async { 
+  try {
+    var userId = await getUserIdFromPrefs();
+    var token = await gettokenFromPrefs();
+
+    String restaurantIdStr = restaurantid.toString(); 
+
+    print("Restaurant id: $restaurantIdStr");
+    print('$api/admin/HOMFOO-restaurant-approval/$restaurantIdStr/');
+
+    var response = await http.put(
+      Uri.parse('$api/admin/HOMFOO-restaurant-approval/$restaurantIdStr/'),  
+      headers: {
+        'Authorization': '$token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({}), 
+    );
+
+    print("-------------------------${response.body}");
+
+    if (response.statusCode == 200) {
+      print("Restaurant Approved successfully");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.green,
+          content: Text('Restaurant Approved successfully!'),
+        ),
+      );
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => AdminHome()),
+      );
+    } else {
+      print("Failed to approve restaurant: ${response.body}");
+    }
+  } catch (error) {
+    print("Error approving restaurant: $error");
+  }
+}
+
+  Future<void> rejectrestaurant(dynamic restaurantid) async { 
+  try {
+    var userId = await getUserIdFromPrefs();
+    var token = await gettokenFromPrefs();
+
+    String restaurantIdStr = restaurantid.toString(); 
+
+    print("Restaurant id: $restaurantIdStr");
+    print('$api/admin/HOMFOO-restaurant-rejection/$restaurantIdStr/');
+
+    var response = await http.put(
+      Uri.parse('$api/admin/HOMFOO-restaurant-rejection/$restaurantIdStr/'),  
+      headers: {
+        'Authorization': '$token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({}), 
+    );
+
+    print("-------------------------${response.body}");
+
+    if (response.statusCode == 200) {
+      print("Restaurant rejected successfully");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.green,
+          content: Text('Restaurant rejected successfully!'),
+        ),
+      );
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => AdminHome()),
+      );
+    } else {
+      print("Failed to reject restaurant: ${response.body}");
+    }
+  } catch (error) {
+    print("Error rejecting restaurant: $error");
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -161,7 +259,7 @@ class _AdminHomeState extends State<AdminHome> {
                                 "Category",
                                 style: TextStyle(
                                   color: Colors.white, // Text color
-                                  fontSize: 16.0, // Font size
+                                  fontSize: 12.0, // Font size
                                 ),
                               ),
                             ],
@@ -196,10 +294,10 @@ class _AdminHomeState extends State<AdminHome> {
                               ),
                               SizedBox(height: 8.0),
                               Text(
-                                "Add Resturants",
+                                "Approved Resturants",
                                 style: TextStyle(
                                   color: Colors.white, // Text color
-                                  fontSize: 16.0, // Font size
+                                  fontSize: 12.0, // Font size
                                 ),
                               ),
                             ],
@@ -243,7 +341,7 @@ class _AdminHomeState extends State<AdminHome> {
                                 "Banners",
                                 style: TextStyle(
                                   color: Colors.white, // Text color
-                                  fontSize: 16.0, // Font size
+                                  fontSize: 12.0, // Font size
                                 ),
                               ),
                             ],
@@ -274,7 +372,7 @@ class _AdminHomeState extends State<AdminHome> {
                               "Resturants",
                               style: TextStyle(
                                 color: Colors.white, // Text color
-                                fontSize: 16.0, // Font size
+                                fontSize: 12.0, // Font size
                               ),
                             ),
                           ],
@@ -400,6 +498,10 @@ class _AdminHomeState extends State<AdminHome> {
                                                       children: [
                                                         ElevatedButton(
                                                           onPressed: () {
+                                                            approverestaurant(
+                                                                restaurantItem[
+                                                                    'id']);
+
                                                             // Add your approval logic here
                                                           },
                                                           style: ElevatedButton
@@ -419,6 +521,10 @@ class _AdminHomeState extends State<AdminHome> {
                                                                 10), // Add some space between the buttons
                                                         ElevatedButton(
                                                           onPressed: () {
+                                                            rejectrestaurant(
+                                                                restaurantItem[
+                                                                    'id']);
+
                                                             // Add your rejection logic here
                                                           },
                                                           style: ElevatedButton
