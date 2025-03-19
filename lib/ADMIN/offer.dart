@@ -35,14 +35,14 @@ class _OfferState extends State<Offer> {
     }
   }
 
-  void handleSubmit() {
-    // Handle form submission logic here
-    print("Title: \${field1Controller.text}");
-    print("Description: \${field2Controller.text}");
-    print("Discount Percentage: \${field3Controller.text}");
-    print("Start Date: \${startDate?.toLocal().toString().split(' ')[0]}");
-    print("End Date: \${endDate?.toLocal().toString().split(' ')[0]}");
-  }
+  // void handleSubmit() {
+  //   // Handle form submission logic here
+  //   print("Title: \${field1Controller.text}");
+  //   print("Description: \${field2Controller.text}");
+  //   print("Discount Percentage: \${field3Controller.text}");
+  //   print("Start Date: \${startDate?.toLocal().toString().split(' ')[0]}");
+  //   print("End Date: \${endDate?.toLocal().toString().split(' ')[0]}");
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -66,10 +66,10 @@ class _OfferState extends State<Offer> {
               onTap: () => _selectDate(context, false),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: handleSubmit,
-              child: const Text("Submit"),
-            ),
+            // ElevatedButton(
+            //   onPressed: handleSubmit,
+            //   child: const Text("Submit"),
+            // ),
           ],
         ),
       ),
